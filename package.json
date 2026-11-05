@@ -1,0 +1,19 @@
+{
+  "name": "local-lead-ai-agent-scraper",
+  "version": "1.0.0",
+  "description": "AI-powered agent that scrapes local business listings (Google Maps) for any search query - mechanics, tuition teachers, web dev companies, etc. - and uses Gemini to extract structured data into Excel - available as CLI and Web UI",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "web": "node server.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "puppeteer": "^22.0.0",
+    "exceljs": "^4.4.0",
+    "dotenv": "^16.4.5",
+    "@google/generative-ai": "^0.21.0",
+    "prompts": "^2.4.2",
+    "express": "^4.19.2"
+  }
+}

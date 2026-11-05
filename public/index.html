@@ -1,0 +1,930 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mechanic Lead Scraper</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ECEDEF;
+    --panel: #FFFFFF;
+    --ink: #16181C;
+    --ink-soft: #565B63;
+    --line: #D7D9DD;
+    --accent: #E8590C;
+    --accent-dark: #C24906;
+    --console-bg: #14171B;
+    --console-text: #8FE388;
+    --console-dim: #4E5A50;
+    --ok: #4CAF6D;
+    --err: #E5484D;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-dark);
+    margin: 0 0 8px;
+  }
+
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    margin: 0 0 10px;
+  }
+
+  .sub {
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0 0 28px;
+    max-width: 46ch;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+  }
+
+  form {
+    display: flex;
+    gap: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 13px 14px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: #9AA0A6; }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 0 22px;
+    border-radius: 7px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+    white-space: nowrap;
+  }
+  button:hover:not(:disabled) { background: var(--accent-dark); }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled { background: #C9CCD1; cursor: not-allowed; }
+
+  .hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 12px 2px 0;
+  }
+
+  /* --- signature element: diagnostic console --- */
+  .console-wrap {
+    display: none;
+    margin-top: 22px;
+  }
+  .console-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1D2026;
+    border: 1px solid #2A2E36;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 9px 14px;
+  }
+  .console-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #A7ACB4;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--console-dim);
+  }
+  .dot.live { background: var(--accent); animation: pulse 1.4s infinite; }
+  .dot.done { background: var(--ok); }
+  .dot.error { background: var(--err); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .console {
+    background: var(--console-bg);
+    border: 1px solid #2A2E36;
+    border-radius: 0 0 10px 10px;
+    padding: 16px;
+    height: 240px;
+    overflow-y: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .console-line { color: var(--console-text); white-space: pre-wrap; }
+  .console-line.error { color: var(--err); }
+  .console-line .ts { color: var(--console-dim); margin-right: 8px; }
+
+  .result-bar {
+    display: none;
+    margin-top: 14px;
+    align-items: center;
+    justify-content: space-between;
+    background: #FFF5EE;
+    border: 1px solid #F2C9A8;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .result-text {
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .download-btn {
+    display: inline-block;
+    background: var(--ok);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 9px 18px;
+    border-radius: 7px;
+  }
+  .download-btn:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <p class="eyebrow">Mechanic Lead Scraper — AI Agent</p>
+  <h1>Search once. Get a ready excel sheet.</h1>
+  <p class="sub">Type an area or search term below. The agent scrapes Google Maps, uses AI to clean up every listing, removes duplicates, and hands you a downloadable spreadsheet.</p>
+
+  <div class="card">
+    <form id="searchForm">
+      <input type="text" id="query" placeholder='e.g. "car mechanic in Delhi"' autocomplete="off" required />
+      <button type="submit" id="searchBtn">Start search</button>
+    </form>
+    <p class="hint" id="hintText">Takes a couple of minutes — the agent scrapes, verifies, and dedupes each listing.</p>
+  </div>
+
+  <div class="console-wrap" id="consoleWrap">
+    <div class="console-header">
+      <div class="console-title"><span class="dot live" id="statusDot"></span><span id="statusLabel">RUNNING</span></div>
+      <div class="console-title" id="progressLabel"></div>
+    </div>
+    <div class="console" id="consoleBox"></div>
+  </div>
+
+  <div class="result-bar" id="resultBar">
+    <span class="result-text" id="resultText">Your sheet is ready.</span>
+    <a href="#" class="download-btn" id="downloadBtn" download>Download Excel</a>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('searchForm');
+const queryInput = document.getElementById('query');
+const searchBtn = document.getElementById('searchBtn');
+const hintText = document.getElementById('hintText');
+const consoleWrap = document.getElementById('consoleWrap');
+const consoleBox = document.getElementById('consoleBox');
+const statusDot = document.getElementById('statusDot');
+const statusLabel = document.getElementById('statusLabel');
+const progressLabel = document.getElementById('progressLabel');
+const resultBar = document.getElementById('resultBar');
+const resultText = document.getElementById('resultText');
+const downloadBtn = document.getElementById('downloadBtn');
+
+function addLine(message, isError = false) {
+  const line = document.createElement('div');
+  line.className = 'console-line' + (isError ? ' error' : '');
+  const ts = new Date().toLocaleTimeString();
+  line.innerHTML = '<span class="ts">' + ts + '</span>' + message;
+  consoleBox.appendChild(line);
+  consoleBox.scrollTop = consoleBox.scrollHeight;
+
+  // pull "Processing X/Y" style messages into the small progress label
+  const match = message.match(/Processing (\d+)\/(\d+)/);
+  if (match) progressLabel.textContent = match[1] + ' / ' + match[2];
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const query = queryInput.value.trim();
+  if (!query) return;
+
+  searchBtn.disabled = true;
+  searchBtn.textContent = 'Running...';
+  hintText.textContent = 'Do not close this tab — the agent is working in the background.';
+  consoleWrap.style.display = 'block';
+  resultBar.style.display = 'none';
+  consoleBox.innerHTML = '';
+  progressLabel.textContent = '';
+  statusDot.className = 'dot live';
+  statusLabel.textContent = 'RUNNING';
+  addLine('Sending search request: "' + query + '"');
+
+  let res;
+  try {
+    res = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+  } catch (err) {
+    addLine('Could not reach the server. Is it still running?', true);
+    resetButton();
+    return;
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    addLine(body.error || 'Failed to start the search.', true);
+    resetButton();
+    return;
+  }
+
+  const { jobId } = await res.json();
+  const source = new EventSource('/api/progress/' + jobId);
+
+  source.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'log') {
+      addLine(data.message);
+    } else if (data.type === 'done') {
+      statusDot.className = 'dot done';
+      statusLabel.textContent = 'DONE';
+      addLine('Done. Your spreadsheet is ready to download.');
+      resultBar.style.display = 'flex';
+      downloadBtn.href = data.downloadUrl;
+      source.close();
+      resetButton();
+    } else if (data.type === 'error') {
+      statusDot.className = 'dot error';
+      statusLabel.textContent = 'ERROR';
+      addLine(data.message, true);
+      source.close();
+      resetButton();
+    }
+  };
+
+  source.onerror = () => {
+    // connection dropped without a clean 'done'/'error' event
+    if (statusLabel.textContent === 'RUNNING') {
+      statusDot.className = 'dot error';
+      statusLabel.textContent = 'ERROR';
+      addLine('Connection to the server was lost.', true);
+    }
+    source.close();
+    resetButton();
+  };
+});
+
+function resetButton() {
+  searchBtn.disabled = false;
+  searchBtn.textContent = 'Start search';
+  hintText.textContent = 'Takes a couple of minutes — the agent scrapes, verifies, and dedupes each listing.';
+}
+</script>
+
+</body>
+</html> -->
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local Lead Scraper</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #EEF0F2;
+            --panel: #FFFFFF;
+            --panel-raised: #F5F6F8;
+            --ink: #16181C;
+            --ink-soft: #565B63;
+            --ink-faint: #83888F;
+            --line: #DADDE1;
+            --line-soft: #E4E6E9;
+            --accent: #E8590C;
+            --accent-dark: #C24906;
+            --caution: #D99A06;
+            --console-bg: #14171B;
+            --console-text: #8FE388;
+            --console-warn: #F2C572;
+            --console-dim: #4E5A50;
+            --ok: #3F9A5C;
+            --err: #D93B3F;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            color-scheme: light;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(1100px 520px at 15% -10%, rgba(232, 89, 12, 0.06), transparent 60%),
+                var(--bg);
+            color: var(--ink);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 56px 20px 80px;
+        }
+
+        .shell {
+            width: 100%;
+            max-width: 760px;
+        }
+
+        /* ---- header ---- */
+        .eyebrow-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11.5px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--accent-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 3px rgba(232, 89, 12, 0.16);
+        }
+
+        .ticket-no {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11.5px;
+            letter-spacing: 0.06em;
+            color: var(--ink-faint);
+            white-space: nowrap;
+        }
+
+        .ticket-no b {
+            color: var(--ink-soft);
+            font-weight: 600;
+        }
+
+        h1 {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            font-size: 44px;
+            line-height: 1.08;
+            letter-spacing: 0.005em;
+            margin: 0 0 12px;
+            color: var(--ink);
+        }
+
+        .sub {
+            color: var(--ink-soft);
+            font-size: 15.5px;
+            line-height: 1.6;
+            margin: 0 0 32px;
+            max-width: 52ch;
+        }
+
+        /* ---- search card, hazard-stripe signature ---- */
+        .card {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 26px 26px 22px;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: repeating-linear-gradient(-45deg,
+                    var(--caution) 0px, var(--caution) 10px,
+                    #1C1F24 10px, #1C1F24 20px);
+        }
+
+        .card-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ink-faint);
+            margin: 4px 0 14px;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            background: var(--panel-raised);
+            color: var(--ink);
+            outline: none;
+            box-shadow: inset 0 1px 2px rgba(20, 23, 27, 0.06);
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: inset 0 1px 2px rgba(20, 23, 27, 0.06), 0 0 0 3px rgba(232, 89, 12, 0.14);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--ink-faint);
+        }
+
+        button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14.5px;
+            padding: 0 26px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            transition: background .15s ease, transform .1s ease;
+            white-space: nowrap;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--accent-dark);
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: #D7DADE;
+            color: var(--ink-faint);
+            cursor: not-allowed;
+        }
+
+        button:focus-visible,
+        input[type="text"]:focus-visible {
+            outline: 2px solid var(--accent-dark);
+            outline-offset: 2px;
+        }
+
+        .hint {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: var(--ink-faint);
+            margin: 14px 2px 0;
+        }
+
+        /* ---- diagnostic console ---- */
+        .console-wrap {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .console-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--panel-raised);
+            border: 1px solid var(--line);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            padding: 11px 16px;
+        }
+
+        .console-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--console-dim);
+            flex-shrink: 0;
+        }
+
+        .dot.live {
+            background: var(--accent);
+            animation: pulse 1.4s infinite;
+        }
+
+        .dot.done {
+            background: var(--ok);
+        }
+
+        .dot.warn {
+            background: var(--console-warn);
+        }
+
+        .dot.error {
+            background: var(--err);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .dot.live {
+                animation: none;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .console {
+            background: var(--console-bg);
+            border: 1px solid var(--line);
+            border-radius: 0 0 12px 12px;
+            padding: 18px;
+            height: 260px;
+            overflow-y: auto;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.75;
+        }
+
+        .console-line {
+            color: var(--console-text);
+            white-space: pre-wrap;
+        }
+
+        .console-line.warn {
+            color: var(--console-warn);
+        }
+
+        .console-line.error {
+            color: var(--err);
+        }
+
+        .console-line .ts {
+            color: var(--console-dim);
+            margin-right: 10px;
+        }
+
+        /* ---- quota warning banner ---- */
+        .banner {
+            display: none;
+            margin-top: 14px;
+            align-items: flex-start;
+            gap: 11px;
+            background: rgba(217, 154, 6, 0.10);
+            border: 1px solid rgba(217, 154, 6, 0.4);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: #7A5A08;
+        }
+
+        .banner a {
+            color: var(--accent-dark);
+            font-weight: 600;
+        }
+
+        /* ---- finished job ticket ---- */
+        .result-bar {
+            display: none;
+            margin-top: 16px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--ok);
+            border-radius: 10px;
+            padding: 16px 18px;
+        }
+
+        .result-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .result-stamp {
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ok);
+            border: 1.5px solid var(--ok);
+            border-radius: 5px;
+            padding: 4px 9px;
+            transform: rotate(-2deg);
+            white-space: nowrap;
+        }
+
+        .result-text {
+            font-size: 14px;
+            color: var(--ink);
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: var(--ok);
+            color: #0F1B14;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            white-space: nowrap;
+            transition: filter .15s ease;
+        }
+
+        .download-btn:hover {
+            filter: brightness(1.08);
+        }
+
+        @media (max-width: 520px) {
+            h1 {
+                font-size: 34px;
+            }
+
+            form {
+                flex-direction: column;
+            }
+
+            .result-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="shell">
+        <div class="eyebrow-row">
+            <p class="eyebrow">Local Lead Scraper — AI Agent</p>
+            <span class="ticket-no">JOB <b id="ticketNo">#0000</b></span>
+        </div>
+        <h1>Search once. Get a ready excel sheet.</h1>
+        <p class="sub">Type an area or search term below. The agent scrapes Google Maps, uses AI to clean up every
+            listing, removes duplicates, and hands you a downloadable spreadsheet.</p>
+
+        <div class="card">
+            <p class="card-label">New search</p>
+            <form id="searchForm">
+                <input type="text" id="query" placeholder='e.g. "tuition teacher in Shahdara, Delhi"' autocomplete="off"
+                    required />
+                <button type="submit" id="searchBtn">Start search</button>
+            </form>
+            <p class="hint" id="hintText">Takes a couple of minutes — the agent scrapes, verifies, and dedupes each
+                listing.</p>
+        </div>
+
+        <div class="console-wrap" id="consoleWrap">
+            <div class="console-header">
+                <div class="console-title"><span class="dot live" id="statusDot"></span><span
+                        id="statusLabel">RUNNING</span></div>
+                <div class="console-title" id="progressLabel"></div>
+            </div>
+            <div class="console" id="consoleBox"></div>
+        </div>
+
+        <div class="banner" id="quotaBanner">
+            <span>⚠️</span>
+            <span>Some listings failed because the Gemini API quota/rate limit was exceeded, even after automatic
+                retries. Your free-tier quota may be exhausted — check <a href="https://aistudio.google.com/apikey"
+                    target="_blank" rel="noopener">aistudio.google.com/apikey</a> or try again later.</span>
+        </div>
+
+        <div class="result-bar" id="resultBar">
+            <div class="result-left">
+                <span class="result-stamp">Ready</span>
+                <span class="result-text" id="resultText">Your sheet is ready.</span>
+            </div>
+            <a href="#" class="download-btn" id="downloadBtn" download>Download Excel</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const queryInput = document.getElementById('query');
+        const searchBtn = document.getElementById('searchBtn');
+        const hintText = document.getElementById('hintText');
+        const consoleWrap = document.getElementById('consoleWrap');
+        const consoleBox = document.getElementById('consoleBox');
+        const statusDot = document.getElementById('statusDot');
+        const statusLabel = document.getElementById('statusLabel');
+        const progressLabel = document.getElementById('progressLabel');
+        const resultBar = document.getElementById('resultBar');
+        const resultText = document.getElementById('resultText');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const quotaBanner = document.getElementById('quotaBanner');
+        const ticketNo = document.getElementById('ticketNo');
+
+        let sawRateLimitIssue = false;
+        let jobCount = 0;
+
+        function addLine(message, level = 'info') {
+            const line = document.createElement('div');
+            line.className = 'console-line' + (level === 'error' ? ' error' : level === 'warn' ? ' warn' : '');
+            const ts = new Date().toLocaleTimeString();
+            line.innerHTML = '<span class="ts">' + ts + '</span>' + message;
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+
+            // pull "Processing X/Y" style messages into the small progress label
+            const match = message.match(/Processing (\d+)\/(\d+)/);
+            if (match) progressLabel.textContent = match[1] + ' / ' + match[2];
+
+            // flag rate-limit / quota related lines so we can show a clear banner even if the run "completes"
+            if (level !== 'info' && /rate limit|quota/i.test(message)) {
+                sawRateLimitIssue = true;
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            jobCount += 1;
+            ticketNo.textContent = '#' + String(jobCount).padStart(4, '0');
+
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Running...';
+            hintText.textContent = 'Do not close this tab — the agent is working in the background.';
+            consoleWrap.style.display = 'block';
+            resultBar.style.display = 'none';
+            quotaBanner.style.display = 'none';
+            sawRateLimitIssue = false;
+            consoleBox.innerHTML = '';
+            progressLabel.textContent = '';
+            statusDot.className = 'dot live';
+            statusLabel.textContent = 'RUNNING';
+            addLine('Sending search request: "' + query + '"');
+
+            let res;
+            try {
+                res = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query }),
+                });
+            } catch (err) {
+                addLine('Could not reach the server. Is it still running?', 'error');
+                resetButton();
+                return;
+            }
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                addLine(body.error || 'Failed to start the search.', 'error');
+                resetButton();
+                return;
+            }
+
+            const { jobId } = await res.json();
+            const source = new EventSource('/api/progress/' + jobId);
+
+            source.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'log') {
+                    addLine(data.message, data.level);
+                } else if (data.type === 'done') {
+                    statusDot.className = sawRateLimitIssue ? 'dot warn' : 'dot done';
+                    statusLabel.textContent = sawRateLimitIssue ? 'DONE (with warnings)' : 'DONE';
+                    addLine('Done. Your spreadsheet is ready to download.');
+                    if (sawRateLimitIssue) quotaBanner.style.display = 'flex';
+                    resultBar.style.display = 'flex';
+                    downloadBtn.href = data.downloadUrl;
+                    source.close();
+                    resetButton();
+                } else if (data.type === 'error') {
+                    statusDot.className = 'dot error';
+                    statusLabel.textContent = 'ERROR';
+                    addLine(data.message, 'error');
+                    if (/rate limit|quota/i.test(data.message)) quotaBanner.style.display = 'flex';
+                    source.close();
+                    resetButton();
+                }
+            };
+
+            source.onerror = () => {
+                // connection dropped without a clean 'done'/'error' event
+                if (statusLabel.textContent === 'RUNNING') {
+                    statusDot.className = 'dot error';
+                    statusLabel.textContent = 'ERROR';
+                    addLine('Connection to the server was lost.', 'error');
+                }
+                source.close();
+                resetButton();
+            };
+        });
+
+        function resetButton() {
+            searchBtn.disabled = false;
+            searchBtn.textContent = 'Start search';
+            hintText.textContent = 'Takes a couple of minutes — the agent scrapes, verifies, and dedupes each listing.';
+        }
+    </script>
+
+</body>
+
+</html>
