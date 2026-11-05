@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: mechanic-aiagent
+    runtime: docker
+    plan: starter        # free (512MB) is usually too small for Chrome
+    healthCheckPath: /
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false      # you paste this in the Render dashboard
+      - key: HEADLESS
+        value: "true"
+      - key: TARGET_RESULTS
+        value: "25"
+      - key: EMAIL_TARGET
+        value: "15"
+      - key: MAX_SCAN_RESULTS
+        value: "60"
